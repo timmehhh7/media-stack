@@ -1,0 +1,74 @@
+---
+version: '3'
+services:
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    ports:
+      - 9000:9000
+    volumes:
+      - "./portainer:/data portainer/portainer"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    restart:
+      unless-stopped
+  nzbget:
+    image: linuxserver/nzbget
+    container_name: nzbget
+    volumes:
+      - "/Volumes/MEDIA/appdata/nzbget:/config"
+      - "/Volumes/MEDIA/Downloads:/downloads"
+      - "/Volumes/MEDIA/Downloads/complete:/downloads/complete"
+    ports:
+      - 27020:6789
+    restart: unless-stopped
+    environment:
+      - PUID=20
+      - PGID=501
+  sonarr:
+    image: linuxserver/sonarr
+    container_name: sonarr
+    depends_on:
+      - nzbget
+    volumes:
+      - "/dev/rtc:/dev/rtc:ro"
+      - "/Volumes/MEDIA/appdata/sonarr:/config"
+      - "/Volumes/MEDIA/TV:/tv"
+      - "/Volumes/MEDIA/Downloads/complete/Series:/downloads"
+    ports:
+      - 27021:8989
+    links:
+      - nzbget
+    restart: unless-stopped
+    environment:
+      - PUID=20
+      - PGID=501
+  couchpotato:
+    image: linuxserver/couchpotato
+    container_name: couchpotato
+    depends_on:
+      - nzbget
+    volumes:
+      - "/Volumes/MEDIA/appdata/couchpotato:/config"
+      - "/Volumes/MEDIA/Finished:/downloads"
+      - "/Volumes/MEDIA/Movies:/movies"
+    ports:
+      - 27023:5050
+    links:
+      - nzbget
+    restart: unless-stopped
+    environment:
+      - PUID=20
+      - PGID=501
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    volumes:
+      - "/Volumes/MEDIA/appdata/radarr:/config"
+      - "/Volumes/MEDIA/Movies:/movies"
+      - "/Volumes/MEDIA/Finished:/downloads"
+    ports:
+      - 27022:7878
+    restart: unless-stopped
+    environment:
+      - PUID=20
+      - PGID=501
