@@ -30,7 +30,7 @@ services:
     depends_on:
       - nzbget
     volumes:
-      - "/dev/rtc:/dev/rtc:ro"
+      # - "/dev/rtc:/dev/rtc:ro"
       - "/Volumes/MEDIA/appdata/sonarr:/config"
       - "/Volumes/MEDIA/TV:/tv"
       - "/Volumes/MEDIA/Downloads/complete/Series:/downloads"
