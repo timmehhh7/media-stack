@@ -1,16 +1,6 @@
 ---
 version: '3'
 services:
-  # portainer:
-  #   image: portainer/portainer
-  #   container_name: portainer
-  #   ports:
-  #     - 9000:9000
-  #   volumes:
-  #     - "./portainer:/data portainer/portainer"
-  #     - "/var/run/docker.sock:/var/run/docker.sock"
-  #   restart:
-  #     unless-stopped
   nzbget:
     image: linuxserver/nzbget
     container_name: nzbget
@@ -22,8 +12,8 @@ services:
       - 27020:6789
     restart: unless-stopped
     environment:
-      - PUID=20
-      - PGID=501
+      - PUID=501
+      - PGID=20
   sonarr:
     image: linuxserver/sonarr
     container_name: sonarr
@@ -40,8 +30,56 @@ services:
       - nzbget
     restart: unless-stopped
     environment:
-      - PUID=20
-      - PGID=501
+      - PUID=501
+      - PGID=20
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    depends_on:
+      - nzbget
+    volumes:
+      - "/Volumes/MEDIA/appdata/radarr:/config"
+      - "/Volumes/MEDIA/Movies:/movies"
+      - "/Volumes/MEDIA/Downloads/complete/Movies:/downloads"
+    ports:
+      - 27022:7878
+    links:
+      - nzbget
+    restart: unless-stopped
+    environment:
+      - PUID=501
+      - PGID=20
+  plex:
+    image: plexinc/pms-docker
+    container_name: plex
+    volumes:
+      - "/Volumes/MEDIA/appdata/plex:/config"
+      - "/Volumes/MEDIA:/data"
+    restart: unless-stopped
+    ports:
+      - 32400:32400/tcp
+      - 3005:3005/tcp
+      - 8324:8324/tcp
+      - 32469:32469/tcp
+      - 1900:1900/udp
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+    environment:
+      - PLEX_CLAIM="claim-GkQ9cdQhR7xsDezJ9cBL"
+      - PUID=501
+      - PGID=20
+  # portainer:
+  #   image: portainer/portainer
+  #   container_name: portainer
+  #   ports:
+  #     - 9000:9000
+  #   volumes:
+  #     - "./portainer:/data portainer/portainer"
+  #     - "/var/run/docker.sock:/var/run/docker.sock"
+  #   restart:
+  #     unless-stopped
   # couchpotato:
   #   image: linuxserver/couchpotato
   #   container_name: couchpotato
@@ -59,16 +97,3 @@ services:
   #   environment:
   #     - PUID=20
   #     - PGID=501
-  radarr:
-    image: linuxserver/radarr
-    container_name: radarr
-    volumes:
-      - "/Volumes/MEDIA/appdata/radarr:/config"
-      - "/Volumes/MEDIA/Movies:/movies"
-      - "/Volumes/MEDIA/Downloads/complete/Movies:/downloads"
-    ports:
-      - 27022:7878
-    restart: unless-stopped
-    environment:
-      - PUID=20
-      - PGID=501
