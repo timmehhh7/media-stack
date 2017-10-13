@@ -65,7 +65,7 @@ services:
     volumes:
       - "/Volumes/MEDIA/appdata/radarr:/config"
       - "/Volumes/MEDIA/Movies:/movies"
-      - "/Volumes/MEDIA/Finished:/downloads"
+      - "/Volumes/MEDIA/Downloads/complete/Movies:/downloads"
     ports:
       - 27022:7878
     restart: unless-stopped
