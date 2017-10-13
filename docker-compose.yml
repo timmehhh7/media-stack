@@ -68,6 +68,7 @@ services:
       - 32414:32414/udp
     environment:
       - PLEX_CLAIM="claim-GkQ9cdQhR7xsDezJ9cBL"
+      - ADVERTISE_IP=http://10.8.8.104:32400/
       - PUID=501
       - PGID=20
   # portainer:
