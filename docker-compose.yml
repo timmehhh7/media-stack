@@ -54,6 +54,7 @@ services:
     container_name: plex
     volumes:
       - "/Volumes/MEDIA/appdata/plex:/config"
+      - "/Volumes/MEDIA/Transcode:/transcode"
       - "/Volumes/MEDIA:/data"
     restart: unless-stopped
     ports:
@@ -68,7 +69,6 @@ services:
       - 32414:32414/udp
     hostname: fairweatherflix
     environment:
-      - PLEX_CLAIM="claim-ByrpJCi1V93gcgZPPVUi"
       - ADVERTISE_IP=http://10.8.8.104:32400/
       - PUID=501
       - PGID=20
