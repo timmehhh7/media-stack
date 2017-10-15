@@ -70,6 +70,7 @@ services:
       - 32414:32414/udp
     environment:
       - ADVERTISE_IP=http://10.8.8.104:32400/
+      - PLEX_CLAIM="claim-N4y4RnaRkgsXjHFs1bdh"
       - TZ="America/Eastern"
       - PUID=501
       - PGID=20
