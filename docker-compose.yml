@@ -5,15 +5,15 @@ services:
     image: linuxserver/nzbget
     container_name: nzbget
     volumes:
-      - "/Volumes/MEDIA/appdata/nzbget:/config"
-      - "/Volumes/MEDIA/Downloads:/downloads"
-      - "/Volumes/MEDIA/Downloads/complete:/downloads/complete"
+      - "/mnt/MEDIA/appdata/nzbget:/config"
+      - "/mnt/MEDIA/Downloads:/downloads"
+      - "/mnt/MEDIA/Downloads/complete:/downloads/complete"
     ports:
       - 27020:6789
     restart: unless-stopped
     environment:
-      - PUID=501
-      - PGID=20
+      - PUID=500
+      - PGID=100
   sonarr:
     image: linuxserver/sonarr
     container_name: sonarr
@@ -21,41 +21,41 @@ services:
       - nzbget
     volumes:
       # - "/dev/rtc:/dev/rtc:ro"
-      - "/Volumes/MEDIA/appdata/sonarr:/config"
-      - "/Volumes/MEDIA/TV:/tv"
-      - "/Volumes/MEDIA/Downloads/complete/Series:/downloads"
+      - "/mnt/MEDIA/appdata/sonarr:/config"
+      - "/mnt/MEDIA/TV:/tv"
+      - "/mnt/MEDIA/Downloads/complete/Series:/downloads"
     ports:
       - 27021:8989
     links:
       - nzbget
     restart: unless-stopped
     environment:
-      - PUID=501
-      - PGID=20
+      - PUID=500
+      - PGID=100
   radarr:
     image: linuxserver/radarr
     container_name: radarr
     depends_on:
       - nzbget
     volumes:
-      - "/Volumes/MEDIA/appdata/radarr:/config"
-      - "/Volumes/MEDIA/Movies:/movies"
-      - "/Volumes/MEDIA/Downloads/complete/Movies:/downloads"
+      - "/mnt/MEDIA/appdata/radarr:/config"
+      - "/mnt/MEDIA/Movies:/movies"
+      - "/mnt/MEDIA/Downloads/complete/Movies:/downloads"
     ports:
       - 27022:7878
     links:
       - nzbget
     restart: unless-stopped
     environment:
-      - PUID=501
-      - PGID=20
+      - PUID=500
+      - PGID=100
   plex:
     image: plexinc/pms-docker:plexpass
     container_name: plex
     volumes:
-      - "/Users/plex/PlexConfig:/config"
-      - "/Volumes/MEDIA/Transcode:/transcode"
-      - "/Volumes/MEDIA:/data"
+      - "/home/tim/PlexConfig:/config"
+      - "/mnt/MEDIA/Transcode:/transcode"
+      - "/mnt/MEDIA:/data"
     restart: unless-stopped
     hostname: fairweatherflix
     ports:
@@ -69,11 +69,10 @@ services:
       - 32413:32413/udp
       - 32414:32414/udp
     environment:
-      - ADVERTISE_IP=http://10.8.8.104:32400/
-      - PLEX_CLAIM="claim-ByF7JvyZAKpGwXHjThvb"
+      - ADVERTISE_IP=http://10.8.8.101:32400/
       - TZ="America/Eastern"
-      - PUID=501
-      - PGID=20
+      - PUID=500
+      - PGID=100
   # portainer:
   #   image: portainer/portainer
   #   container_name: portainer
@@ -90,9 +89,9 @@ services:
   #   depends_on:
   #     - nzbget
   #   volumes:
-  #     - "/Volumes/MEDIA/appdata/couchpotato:/config"
-  #     - "/Volumes/MEDIA/Finished:/downloads"
-  #     - "/Volumes/MEDIA/Movies:/movies"
+  #     - "/mnt/MEDIA/appdata/couchpotato:/config"
+  #     - "/mnt/MEDIA/Finished:/downloads"
+  #     - "/mnt/MEDIA/Movies:/movies"
   #   ports:
   #     - 27023:5050
   #   links:
