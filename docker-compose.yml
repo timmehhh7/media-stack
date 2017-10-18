@@ -62,6 +62,22 @@ services:
       - TZ="America/Eastern"
       - PUID=500
       - PGID=100
+  plexpy:
+    image: linuxserver/plexpy
+    container_name: plexpy
+    depends_on:
+      - plex
+    volumes:
+      - "/mnt/MEDIA/appdata/plexpy:/config"
+      - "/home/tim/PlexConfig/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs:ro"
+    ports:
+      - 27023:8181
+    links:
+      - plex
+    restart: unless-stopped
+    environment:
+      - PUID=500
+      - PGID=100
   # portainer:
   #   image: portainer/portainer
   #   container_name: portainer
