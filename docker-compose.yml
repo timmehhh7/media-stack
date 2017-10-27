@@ -78,6 +78,22 @@ services:
     environment:
       - PUID=500
       - PGID=100
+  # plexrequests:
+  #   image: linuxserver/plexrequests
+  #   container_name: plexrequests
+  #   depends_on:
+  #     - plex
+  #   volumes:
+  #     - /opt/appdata/plexrequests:/config
+  #     - /mnt/storage/tv:/tv
+  #   ports:
+  #     - 27026:3000
+  #   links:
+  #     - plex
+  #   restart: always
+  #   environment:
+  #     - PUID=${PUID}
+  #     - PGID=${PGID}
   # portainer:
   #   image: portainer/portainer
   #   container_name: portainer
