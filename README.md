@@ -16,11 +16,11 @@ Each of these is fully containerized and easily setup, with some simple volume a
 
 ## Requirements
 
- 1 - A host machine running Docker - I use an Ubuntu installation on a Mac Mini
- 2 - Docker and Docker Compose
- 3 - Git
- 4 - Somewhere to store Media files and configurations - I use a NAS and connect over NFS
- 5 - My current setup uses the Plexpass tagged container for Plex - If you do NOT have Plexpass you may need to use an alternative image
+ 1. A host machine running Docker - I use an Ubuntu installation on a Mac Mini
+ 2. Docker and Docker Compose
+ 3. Git
+ 4. Somewhere to store Media files and configurations - I use a NAS and connect over NFS
+ 5. My current setup uses the Plexpass tagged container for Plex - If you do NOT have Plexpass you may need to use an alternative image
 
 ## Installing
 
