@@ -34,6 +34,8 @@ Each of these is fully containerized and easily setup, with some simple volume a
  * Ensure all volume mounts are customized - **For Plex you need a non-NAS mount point for its configuration files**
  * Customize network ports accordingly - This default setup uses ports 27020, 27021, 27022, and 27023
  * Customize User and Group IDs according to your Media storage setup.  The defaults in the included file may work
+ * You can tunnel to your running linux machine via SSH as follows:
+ `ssh user@server -L 27020:<IP of Docker Host>:27020 -L 27021:<IP of Docker Host>:27021 -L 27022:<IP of Docker Host>:27022 -L 27023:<IP of Docker Host>:27023 -N`
 
 In order to ensure the Sonarr and Radarr containers can find downloaded media from Nzbget properly you need to configure them as follows:
 
