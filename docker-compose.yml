@@ -78,6 +78,32 @@ services:
     environment:
       - PUID=500
       - PGID=100
+  ombi:
+    image: linuxserver/ombi
+    container_name: ombi
+    depends_on:
+      - plex
+    volumes:
+      - "/mnt/MEDIA/appdata/ombi:/config"
+    ports:
+      - 27024:3579
+    links:
+      - plex
+    restart: unless-stopped
+    environment:
+      - PUID=500
+      - PGID=100
+  proxy:
+    image: nginx:latest
+    container_name: proxy
+    depends_on:
+      - ombi
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf"
+      - "/mnt/MEDIA/certs/condo.thefairweathers.ca/:/etc/letsencrypt/"
+    ports:
+      - 80:80
+      - 443:443
   # plexrequests:
   #   image: linuxserver/plexrequests
   #   container_name: plexrequests
