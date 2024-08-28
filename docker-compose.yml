@@ -5,29 +5,29 @@ services:
     image: linuxserver/nzbget
     container_name: nzbget
     volumes:
-      - "/mnt/MEDIA/appdata/nzbget:/config"
+      - "/mnt/APPS/nzbget:/config"
       - "/mnt/MEDIA/Downloads:/downloads"
       - "/mnt/MEDIA/Downloads/complete:/downloads/complete"
     ports:
       - 27020:6789
-    restart: unless-stopped
     environment:
       - PUID=500
       - PGID=100
   sonarr:
     image: linuxserver/sonarr
     container_name: sonarr
+    security_opt:
+      - seccomp:unconfined
     depends_on:
       - nzbget
     volumes:
-      - "/mnt/MEDIA/appdata/sonarr:/config"
+      - "/mnt/APPS/sonarr:/config"
       - "/mnt/MEDIA/TV:/tv"
       - "/mnt/MEDIA/Downloads/complete/Series:/downloads"
     ports:
       - 27021:8989
     links:
       - nzbget
-    restart: unless-stopped
     environment:
       - PUID=500
       - PGID=100
@@ -37,14 +37,13 @@ services:
     depends_on:
       - nzbget
     volumes:
-      - "/mnt/MEDIA/appdata/radarr:/config"
+      - "/mnt/APPS/radarr:/config"
       - "/mnt/MEDIA/Movies:/movies"
       - "/mnt/MEDIA/Downloads/complete/Movies:/downloads"
     ports:
       - 27022:7878
     links:
       - nzbget
-    restart: unless-stopped
     environment:
       - PUID=500
       - PGID=100
@@ -55,95 +54,125 @@ services:
       - "/home/tim/PlexConfig:/config"
       - "/mnt/MEDIA/Transcode:/transcode"
       - "/mnt/MEDIA:/data"
-    restart: unless-stopped
     network_mode: host
     hostname: fairweatherflix
     environment:
       - TZ="America/Eastern"
       - PUID=500
       - PGID=100
-  plexpy:
-    image: linuxserver/plexpy
-    container_name: plexpy
+#  plexpy:
+#    image: linuxserver/plexpy
+#    container_name: plexpy
+#    depends_on:
+#      - plex
+#    volumes:
+#      - "/mnt/MEDIA/appdata/plexpy:/config"
+#      - "/home/tim/PlexConfig/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs:ro"
+#    ports:
+#      - 27023:8181
+#    links:
+#      - plex
+#    environment:
+#      - PUID=500
+#      - PGID=100
+  tautulli:
+    image: ghcr.io/tautulli/tautulli
+    container_name: tautulli
     depends_on:
       - plex
     volumes:
-      - "/mnt/MEDIA/appdata/plexpy:/config"
+      - "/mnt/APPS/tautulli:/config"
       - "/home/tim/PlexConfig/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs:ro"
     ports:
       - 27023:8181
     links:
       - plex
-    restart: unless-stopped
     environment:
       - PUID=500
       - PGID=100
-  ombi:
-    image: linuxserver/ombi
-    container_name: ombi
-    depends_on:
-      - plex
-    volumes:
-      - "/mnt/MEDIA/appdata/ombi:/config"
-    ports:
-      - 27024:3579
-    links:
-      - plex
-    restart: unless-stopped
+#  ombi:
+#    image: linuxserver/ombi
+#    container_name: ombi
+#    depends_on:
+#      - plex
+#    volumes:
+#      - "/mnt/MEDIA/appdata/ombi:/config"
+#    ports:
+#      - 27024:3579
+#    links:
+#      - plex
+#    environment:
+#      - PUID=500
+#      - PGID=100
+  swag:
+    image: ghcr.io/linuxserver/swag
+    container_name: swag
+    cap_add:
+      - NET_ADMIN
     environment:
       - PUID=500
       - PGID=100
-  proxy:
-    image: nginx:latest
-    container_name: proxy
-    depends_on:
-      - ombi
+      - URL=thefairweathers.ca
+      - SUBDOMAINS=wildcard
+      - VALIDATION=dns
+      - DNSPLUGIN=cloudflare #optional
+      - EMAIL=tim@thefairweathers.ca
+      - STAGING=false
     volumes:
-      - "./nginx.conf:/etc/nginx/nginx.conf"
-      - "/mnt/MEDIA/certs/condo.thefairweathers.ca/:/etc/letsencrypt/"
+      - /mnt/APPS/swag:/config
     ports:
-      - 80:80
       - 443:443
-  # plexrequests:
-  #   image: linuxserver/plexrequests
-  #   container_name: plexrequests
-  #   depends_on:
-  #     - plex
-  #   volumes:
-  #     - /opt/appdata/plexrequests:/config
-  #     - /mnt/storage/tv:/tv
-  #   ports:
-  #     - 27026:3000
-  #   links:
-  #     - plex
-  #   restart: always
-  #   environment:
-  #     - PUID=${PUID}
-  #     - PGID=${PGID}
-  # portainer:
-  #   image: portainer/portainer
-  #   container_name: portainer
-  #   ports:
-  #     - 9000:9000
-  #   volumes:
-  #     - "./portainer:/data portainer/portainer"
-  #     - "/var/run/docker.sock:/var/run/docker.sock"
-  #   restart:
-  #     unless-stopped
-  # couchpotato:
-  #   image: linuxserver/couchpotato
-  #   container_name: couchpotato
-  #   depends_on:
-  #     - nzbget
-  #   volumes:
-  #     - "/mnt/MEDIA/appdata/couchpotato:/config"
-  #     - "/mnt/MEDIA/Finished:/downloads"
-  #     - "/mnt/MEDIA/Movies:/movies"
-  #   ports:
-  #     - 27023:5050
-  #   links:
-  #     - nzbget
-  #   restart: unless-stopped
-  #   environment:
-  #     - PUID=20
-  #     - PGID=501
+      - 80:80 #optional
+  ddclient:
+    image: ghcr.io/linuxserver/ddclient
+    container_name: ddclient
+    environment:
+      - PUID=500
+      - PGID=100
+    volumes:
+      - /mnt/APPS/ddclient:/config
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    environment:
+      - TZ="America/Eastern"
+      - PUID=500
+      - PGID=100
+    network_mode: host
+    volumes:
+      - /mnt/APPS/homeassistant:/config
+  homebridge:
+    image: oznu/homebridge:latest
+    container_name: homebridge
+    restart: always
+    network_mode: host
+    environment:
+      - TZ="America/Eastern"
+      - PGID=100
+      - PUID=500
+      - HOMEBRIDGE_CONFIG_UI=1
+      - HOMEBRIDGE_CONFIG_UI_PORT=8581
+    volumes:
+      - /mnt/APPS/homebridge:/homebridge
+#  proxy:
+#    image: nginx:latest
+#    container_name: proxy
+#    depends_on:
+#      - ombi
+#    volumes:
+#      - "./nginx.conf:/etc/nginx/nginx.conf"
+#      - "/mnt/MEDIA/certs/condo.thefairweathers.ca/:/etc/letsencrypt/"
+#    ports:
+#      - 80:80
+#      - 443:443
+#  certbot:
+#    image: certbot/dns-cloudflare:latest
+#    container_name: certs
+#    volumes:
+#      - "/mnt/MEDIA/certbot/etc/:/etc/letsencrypt/"
+#      - "/mnt/MEDIA/certbot/lib/:/var/lib/letsencrypt/"
+#      - "/mnt/MEDIA/certbot/log/:/var/log/letsencrypt/"
+#    environment:
+#      - PUID=500
+#      - PGID=100
+
