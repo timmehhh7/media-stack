@@ -60,6 +60,8 @@ services:
       - TZ="America/Eastern"
       - PUID=500
       - PGID=100
+    devices:
+      - /dev/dri:/dev/dri
 #  plexpy:
 #    image: linuxserver/plexpy
 #    container_name: plexpy
