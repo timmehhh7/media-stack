@@ -2,7 +2,7 @@
 version: '2'
 services:
   nzbget:
-    image: linuxserver/nzbget
+    image: linuxserver/nzbget:version-v21.1
     container_name: nzbget
     volumes:
       - "/mnt/APPS/nzbget:/config"
@@ -14,7 +14,8 @@ services:
       - PUID=500
       - PGID=100
   sonarr:
-    image: linuxserver/sonarr
+    image: linuxserver/sonarr:4.0.15
+    # image: linuxserver/sonarr
     container_name: sonarr
     security_opt:
       - seccomp:unconfined
@@ -32,7 +33,7 @@ services:
       - PUID=500
       - PGID=100
   radarr:
-    image: linuxserver/radarr
+    image: linuxserver/radarr:5.27.5
     container_name: radarr
     depends_on:
       - nzbget
@@ -78,7 +79,7 @@ services:
 #      - PUID=500
 #      - PGID=100
   tautulli:
-    image: ghcr.io/tautulli/tautulli
+    image: linuxserver/tautulli:2.16.0
     container_name: tautulli
     depends_on:
       - plex
