@@ -93,20 +93,20 @@ services:
     environment:
       - PUID=500
       - PGID=100
-#  ombi:
-#    image: linuxserver/ombi:4.47.1
-#    container_name: ombi
-#    depends_on:
-#      - plex
-#    volumes:
-#      - "/mnt/MEDIA/appdata/ombi:/config"
-#    ports:
-#      - 27024:3579
-#    links:
-#      - plex
-#    environment:
-#      - PUID=500
-#      - PGID=100
+  ombi:
+    image: linuxserver/ombi:4.47.1
+    container_name: ombi
+    depends_on:
+      - plex
+    volumes:
+      - "/mnt/MEDIA/appdata/ombi:/config"
+    ports:
+      - 27024:3579
+    links:
+      - plex
+    environment:
+      - PUID=500
+      - PGID=100
   swag:
     image: ghcr.io/linuxserver/swag
     container_name: swag
