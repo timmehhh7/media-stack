@@ -62,21 +62,6 @@ services:
       - PGID=100
     devices:
       - /dev/dri:/dev/dri
-#  plexpy:
-#    image: linuxserver/plexpy
-#    container_name: plexpy
-#    depends_on:
-#      - plex
-#    volumes:
-#      - "/mnt/MEDIA/appdata/plexpy:/config"
-#      - "/home/tim/PlexConfig/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs:ro"
-#    ports:
-#      - 27023:8181
-#    links:
-#      - plex
-#    environment:
-#      - PUID=500
-#      - PGID=100
   tautulli:
     image: linuxserver/tautulli:2.16.0
     container_name: tautulli
@@ -155,25 +140,3 @@ services:
       - HOMEBRIDGE_CONFIG_UI_PORT=8581
     volumes:
       - /mnt/APPS/homebridge:/homebridge
-#  proxy:
-#    image: nginx:latest
-#    container_name: proxy
-#    depends_on:
-#      - ombi
-#    volumes:
-#      - "./nginx.conf:/etc/nginx/nginx.conf"
-#      - "/mnt/MEDIA/certs/condo.thefairweathers.ca/:/etc/letsencrypt/"
-#    ports:
-#      - 80:80
-#      - 443:443
-#  certbot:
-#    image: certbot/dns-cloudflare:latest
-#    container_name: certs
-#    volumes:
-#      - "/mnt/MEDIA/certbot/etc/:/etc/letsencrypt/"
-#      - "/mnt/MEDIA/certbot/lib/:/var/lib/letsencrypt/"
-#      - "/mnt/MEDIA/certbot/log/:/var/log/letsencrypt/"
-#    environment:
-#      - PUID=500
-#      - PGID=100
-
