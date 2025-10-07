@@ -142,7 +142,7 @@ services:
       - /mnt/APPS/homebridge:/homebridge
   tdarr:
     image: haveagitgat/tdarr
-    container_name: tdarr_server
+    container_name: tdarr
     restart: unless-stopped
     ports:
       - "8265:8265" # WebUI
