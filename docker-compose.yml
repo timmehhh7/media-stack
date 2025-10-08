@@ -170,7 +170,7 @@ services:
     image: docker.n8n.io/n8nio/n8n
     restart: unless-stopped
     ports:
-      - "127.0.0.1:5678:5678"
+      - "5678:5678"
     environment:
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
       - N8N_HOST=automate.thefairweathers.ca
