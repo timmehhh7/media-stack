@@ -77,6 +77,19 @@ services:
     environment:
       - PUID=500
       - PGID=100
+  overseerr:
+    image: sctx/overseerr:latest
+    container_name: overseerr
+    environment:
+      - TZ="America/Eastern"
+      - PUID=500
+      - PGID=100
+      - PORT=5055 #optional
+    ports:
+      - 5055:5055
+    volumes:
+      - /mnt/APPS/overseerr:/app/config
+    restart: unless-stopped
   ombi:
     image: linuxserver/ombi:4.47.1
     container_name: ombi
