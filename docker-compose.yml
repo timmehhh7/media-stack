@@ -170,6 +170,7 @@ services:
       - inContainer=true
       - ffmpegVersion=7
       - nodeName=Krypton
+      - nodeHardwareEncoding=true
       - LIBVA_DRIVER_NAME=iHD              # use the modern Intel media driver
       - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128
     volumes:
