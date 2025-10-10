@@ -174,8 +174,9 @@ services:
       - LIBVA_DRIVER_NAME=iHD              # use the modern Intel media driver
       - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128
     volumes:
-      - /mnt/APPS/tdarr:/app/server
+      - /mnt/APPS/tdarr/server:/app/server
       - /mnt/APPS/tdarr/logs:/app/logs
+      - /mnt/APPS/tdarr/configs:/app/configs
       - /mnt/MEDIA:/media # Your media library
       - /mnt/MEDIA/tdarr:/temp # Transcode cache
       # Optional: Specify Intel QSV for FFMPEG
