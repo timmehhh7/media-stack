@@ -182,6 +182,9 @@ services:
       # - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128 
       #    devices:
       #- /dev/dri:/dev/dri # Expose Intel iGPU devices
+    group_add:       
+      - "render"
+      - "video"
     devices:
       - /dev/dri/renderD128:/dev/dri/renderD128
       - /dev/dri/card0:/dev/dri/card0
