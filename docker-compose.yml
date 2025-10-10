@@ -170,6 +170,8 @@ services:
       - inContainer=true
       - ffmpegVersion=7
       - nodeName=Krypton
+      - LIBVA_DRIVER_NAME=iHD              # use the modern Intel media driver
+      - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128
     volumes:
       - /mnt/APPS/tdarr:/app/server
       - /mnt/APPS/tdarr/logs:/app/logs
@@ -179,8 +181,6 @@ services:
       # - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128 
       #    devices:
       #- /dev/dri:/dev/dri # Expose Intel iGPU devices
-      # - LIBVA_DRIVER_NAME=iHD              # use the modern Intel media driver
-      - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128
     devices:
       - /dev/dri/renderD128:/dev/dri/renderD128
       - /dev/dri/card0:/dev/dri/card0
