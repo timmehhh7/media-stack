@@ -177,8 +177,13 @@ services:
       - /mnt/MEDIA/tdarr:/temp # Transcode cache
       # Optional: Specify Intel QSV for FFMPEG
       # - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128 
+      #    devices:
+      #- /dev/dri:/dev/dri # Expose Intel iGPU devices
+      - LIBVA_DRIVER_NAME=iHD              # use the modern Intel media driver
+      - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128
     devices:
-      - /dev/dri:/dev/dri # Expose Intel iGPU devices
+      - /dev/dri/renderD128:/dev/dri/renderD128
+      - /dev/dri/card0:/dev/dri/card0
   n8n:
     image: docker.n8n.io/n8nio/n8n
     restart: unless-stopped
