@@ -202,6 +202,12 @@ services:
       - N8N_RUNNERS_ENABLED=true
       - N8N_PROXY_HOPS="1"
       - N8N_PROTOCOL="http"
+      - N8N_SMTP_HOST=smtp-relay.brevo.com
+      - N8N_SMTP_PORT=587
+      - N8N_SMTP_USER=${SMTP_USER}
+      - N8N_SMTP_PASS=${SMTP_PASSWORD}
+      - N8N_SMTP_SENDER="n8n <noreply@thefairweathers.ca>"
+      - N8N_SMTP_SSL=false
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
