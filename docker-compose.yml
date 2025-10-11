@@ -214,7 +214,7 @@ services:
     volumes:
       - /mnt/APPS/n8n:/home/node/.n8n
     depends_on:
-      - postgres
+      postgres:
         condition: service_healthy
   postgres:
     image: postgres:16
