@@ -200,6 +200,12 @@ services:
       - N8N_PORT=5678
       - N8N_PROTOCOL=https
       - N8N_RUNNERS_ENABLED=true
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=${N8N_DB_USER}
+      - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD}
       - NODE_ENV=production
       - WEBHOOK_URL=https://automate.thefairweathers.ca/
       - TZ="America/Eastern"
@@ -207,3 +213,22 @@ services:
       - PGID=100
     volumes:
       - /mnt/APPS/n8n:/home/node/.n8n
+    depends_on:
+      - postgres
+        condition: service_healthy
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=n8n
+      - POSTGRES_USER=${N8N_DB_USER}
+      - POSTGRES_PASSWORD=${N8N_DB_PASSWORD}
+      - TZ="America/Eastern"
+      - PUID=500
+      - PGID=100
+    volumes:
+      - /mnt/n8n-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
