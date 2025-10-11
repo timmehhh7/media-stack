@@ -200,6 +200,8 @@ services:
       - N8N_PORT=5678
       - N8N_PROTOCOL=https
       - N8N_RUNNERS_ENABLED=true
+      - N8N_PROXY_HOPS="1"
+      - N8N_PROTOCOL="http"
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
@@ -218,6 +220,7 @@ services:
         condition: service_healthy
   postgres:
     image: postgres:16
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=n8n
       - POSTGRES_USER=${N8N_DB_USER}
