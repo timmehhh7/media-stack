@@ -198,10 +198,9 @@ services:
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
       - N8N_HOST=automate.thefairweathers.ca
       - N8N_PORT=5678
-      - N8N_PROTOCOL=https
       - N8N_RUNNERS_ENABLED=true
-      - N8N_PROXY_HOPS="1"
-      - N8N_PROTOCOL="http"
+      - N8N_PROXY_HOPS=1
+      - N8N_PROTOCOL=http
       - N8N_EMAIL_MODE=smtp
       - N8N_SMTP_HOST=smtp-relay.brevo.com
       - N8N_SMTP_PORT=587
@@ -216,10 +215,12 @@ services:
       - DB_POSTGRESDB_USER=${N8N_DB_USER}
       - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD}
       - NODE_ENV=production
-      - WEBHOOK_URL=https://automate.thefairweathers.ca/
+      - WEBHOOK_URL=https://automate.thefairweathers.ca
+      - N8N_EDITOR_BASE_URL=https://automate.thefairweathers.ca
       - TZ="America/Eastern"
       - PUID=500
       - PGID=100
+      - N8N_LOG_LEVEL=debug
     volumes:
       - /mnt/APPS/n8n:/home/node/.n8n
     depends_on:
