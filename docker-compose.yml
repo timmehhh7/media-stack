@@ -227,7 +227,8 @@ services:
       - NODE_ENV=production
       - WEBHOOK_URL=https://automate.thefairweathers.ca
       - N8N_EDITOR_BASE_URL=https://automate.thefairweathers.ca
-      - TZ="America/Eastern"
+      - TZ=America/Eastern
+      - GENERIC_TIMEZONE=America/Eastern
       - PUID=500
       - PGID=100
       # - N8N_LOG_LEVEL=debug
