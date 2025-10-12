@@ -3,6 +3,7 @@ services:
   nzbget:
     image: linuxserver/nzbget:version-v21.1
     container_name: nzbget
+    restart: unless-stopped
     volumes:
       - "/mnt/APPS/nzbget:/config"
       - "/mnt/MEDIA/Downloads:/downloads"
@@ -16,6 +17,7 @@ services:
     image: linuxserver/sonarr:4.0.15
     # image: linuxserver/sonarr
     container_name: sonarr
+    restart: unless-stopped
     security_opt:
       - seccomp:unconfined
     depends_on:
@@ -34,6 +36,7 @@ services:
   radarr:
     image: linuxserver/radarr:5.27.5
     container_name: radarr
+    restart: unless-stopped
     depends_on:
       - nzbget
     volumes:
@@ -50,6 +53,7 @@ services:
   plex:
     image: plexinc/pms-docker:plexpass
     container_name: plex
+    restart: unless-stopped
     volumes:
       - "/home/tim/PlexConfig:/config"
       - "/mnt/MEDIA/Transcode:/transcode"
@@ -65,6 +69,7 @@ services:
   tautulli:
     image: linuxserver/tautulli:2.16.0
     container_name: tautulli
+    restart: unless-stopped
     depends_on:
       - plex
     volumes:
@@ -80,6 +85,7 @@ services:
   overseerr:
     image: sctx/overseerr:latest
     container_name: overseerr
+    restart: unless-stopped
     environment:
       - TZ="America/Eastern"
       - PUID=500
@@ -93,6 +99,7 @@ services:
   ombi:
     image: linuxserver/ombi:4.47.1
     container_name: ombi
+    restart: unless-stopped
     depends_on:
       - plex
     volumes:
@@ -107,6 +114,7 @@ services:
   swag:
     image: ghcr.io/linuxserver/swag
     container_name: swag
+    restart: unless-stopped
     cap_add:
       - NET_ADMIN
     environment:
@@ -126,6 +134,7 @@ services:
   ddclient:
     image: ghcr.io/linuxserver/ddclient
     container_name: ddclient
+    restart: unless-stopped
     environment:
       - PUID=500
       - PGID=100
@@ -134,6 +143,7 @@ services:
   homeassistant:
     image: ghcr.io/home-assistant/home-assistant:stable
     container_name: homeassistant
+    restart: unless-stopped
     environment:
       - TZ="America/Eastern"
       - PUID=500
@@ -144,6 +154,7 @@ services:
   homebridge:
     image: oznu/homebridge:latest
     container_name: homebridge
+    restart: unless-stopped
     network_mode: host
     environment:
       - TZ="America/Eastern"
@@ -220,7 +231,7 @@ services:
       - TZ="America/Eastern"
       - PUID=500
       - PGID=100
-      - N8N_LOG_LEVEL=debug
+      # - N8N_LOG_LEVEL=debug
     volumes:
       - /mnt/APPS/n8n:/home/node/.n8n
     depends_on:
