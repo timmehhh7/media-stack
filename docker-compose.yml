@@ -95,7 +95,6 @@ services:
       - 5055:5055
     volumes:
       - /mnt/APPS/overseerr:/app/config
-    restart: unless-stopped
   ombi:
     image: linuxserver/ombi:4.47.1
     container_name: ombi
