@@ -101,7 +101,7 @@ services:
     restart: unless-stopped
     environment:
       # ---- Cloudflare DNS for ACME (lego uses this var) ----
-      - CF_DNS_API_TOKEN=${CF_API_TOKEN}
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
       - TZ="America/Eastern"
       - PUID=500
       - PGID=100
