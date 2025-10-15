@@ -180,26 +180,6 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.whoami.rule=Host(`whoami.${BASE_DOMAIN}`)"
       - "traefik.http.routers.whoami.entrypoints=web"
-  swag:
-    image: ghcr.io/linuxserver/swag
-    container_name: swag
-    restart: unless-stopped
-    cap_add:
-      - NET_ADMIN
-    environment:
-      - PUID=500
-      - PGID=100
-      - URL=thefairweathers.ca
-      - SUBDOMAINS=wildcard
-      - VALIDATION=dns
-      - DNSPLUGIN=cloudflare #optional
-      - EMAIL=tim@thefairweathers.ca
-      - STAGING=false
-    volumes:
-      - /mnt/APPS/swag:/config
-    ports:
-      - 443:443
-      - 80:80 #optional
   ddclient:
     image: ghcr.io/linuxserver/ddclient
     container_name: ddclient
