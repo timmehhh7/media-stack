@@ -114,6 +114,7 @@ services:
       - media
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
       - "traefik.http.routers.overseerr.rule=Host(`requests.${BASE_DOMAIN}`)"
       - "traefik.http.routers.overseerr.entrypoints=websecure"
       - "traefik.http.routers.overseerr.tls=true"
@@ -141,7 +142,7 @@ services:
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.websecure.address=:443
-      - --entrypoints.websecure.http.tls.certresolver=le
+      - --entrypoints.websecure.http.tls.certresolver=le-dns
       # ---- API / Dashboard ----
       - --api.dashboard=true
       - --api.insecure=false
@@ -292,7 +293,7 @@ services:
       - N8N_PORT=5678
       - N8N_RUNNERS_ENABLED=true
       - N8N_PROXY_HOPS=1
-      - N8N_PROTOCOL=http
+      - N8N_PROTOCOL=https
       - N8N_EMAIL_MODE=smtp
       - N8N_SMTP_HOST=smtp-relay.brevo.com
       - N8N_SMTP_PORT=587
@@ -319,6 +320,7 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
       - "traefik.http.routers.n8n.rule=Host(`automate.${BASE_DOMAIN}`)"
       - "traefik.http.routers.n8n.entrypoints=websecure"
       - "traefik.http.routers.n8n.tls=true"
