@@ -185,13 +185,13 @@ services:
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_USERS}"
 
       # Some sensible security headers (adjust as you like)
-      - "traefik.http.middlewares.secure-headers.headers.stsSeconds=63072000"
-      - "traefik.http.middlewares.secure-headers.headers.stsIncludeSubdomains=true"
-      - "traefik.http.middlewares.secure-headers.headers.stsPreload=true"
-      - "traefik.http.middlewares.secure-headers.headers.referrerPolicy=no-referrer-when-downgrade"
-      - "traefik.http.middlewares.secure-headers.headers.frameDeny=true"
-      - "traefik.http.middlewares.secure-headers.headers.contentTypeNosniff=true"
-      - "traefik.http.middlewares.secure-headers.headers.browserXssFilter=true"
+      # - "traefik.http.middlewares.secure-headers.headers.stsSeconds=63072000"
+      # - "traefik.http.middlewares.secure-headers.headers.stsIncludeSubdomains=true"
+      # - "traefik.http.middlewares.secure-headers.headers.stsPreload=true"
+      # - "traefik.http.middlewares.secure-headers.headers.referrerPolicy=no-referrer-when-downgrade"
+      # - "traefik.http.middlewares.secure-headers.headers.frameDeny=true"
+      # - "traefik.http.middlewares.secure-headers.headers.contentTypeNosniff=true"
+      # - "traefik.http.middlewares.secure-headers.headers.browserXssFilter=true"
     ports:
       - "80:80"
       - "443:443"
