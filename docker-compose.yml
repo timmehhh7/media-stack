@@ -1,9 +1,19 @@
 ---
+networks:
+  proxy:
+    driver: bridge
+  media:
+    driver: bridge
+  backend:
+    driver: bridge
+
 services:
   nzbget:
     image: linuxserver/nzbget:version-v21.1
     container_name: nzbget
     restart: unless-stopped
+    networks:
+      - media
     volumes:
       - "/mnt/APPS/nzbget:/config"
       - "/mnt/MEDIA/Downloads:/downloads"
@@ -22,6 +32,8 @@ services:
       - seccomp:unconfined
     depends_on:
       - nzbget
+    networks:
+      - media
     volumes:
       - "/mnt/APPS/sonarr:/config"
       - "/mnt/MEDIA/TV:/tv"
@@ -39,6 +51,8 @@ services:
     restart: unless-stopped
     depends_on:
       - nzbget
+    networks:
+      - media
     volumes:
       - "/mnt/APPS/radarr:/config"
       - "/mnt/MEDIA/Movies:/movies"
@@ -72,13 +86,13 @@ services:
     restart: unless-stopped
     depends_on:
       - plex
+    networks:
+      - media
     volumes:
       - "/mnt/APPS/tautulli:/config"
       - "/home/tim/PlexConfig/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs:ro"
     ports:
       - 27023:8181
-    links:
-      - plex
     environment:
       - PUID=500
       - PGID=100
@@ -95,6 +109,9 @@ services:
       - 5055:5055
     volumes:
       - /mnt/APPS/overseerr:/app/config
+    networks:
+      - proxy
+      - media
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.overseerr.rule=Host(`requests.${BASE_DOMAIN}`)"
@@ -118,6 +135,7 @@ services:
       # ---- Providers ----
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=proxy
       # ---- EntryPoints ----
       - --entryPoints.web.address=:80
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
@@ -137,6 +155,8 @@ services:
 
       # (Optional) First run against staging to avoid rate limits:
       # - --certificatesresolvers.le-dns.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+    networks:
+      - proxy
     labels:
       - "traefik.enable=true"
 
@@ -194,6 +214,8 @@ services:
     environment:
       - PUID=500
       - PGID=100
+    networks:
+      - media
     volumes:
       - /mnt/APPS/ddclient:/config
   homeassistant:
@@ -240,6 +262,8 @@ services:
       - nodeHardwareEncoding=true
       - LIBVA_DRIVER_NAME=iHD              # use the modern Intel media driver
       - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128
+    networks:
+      - media
     volumes:
       - /mnt/APPS/tdarr/server:/app/server
       - /mnt/APPS/tdarr/logs:/app/logs
@@ -290,6 +314,9 @@ services:
       - PUID=500
       - PGID=100
       # - N8N_LOG_LEVEL=debug
+    networks:
+      - backend
+      - proxy
     volumes:
       - /mnt/APPS/n8n:/home/node/.n8n
     depends_on:
@@ -306,6 +333,8 @@ services:
       - TZ="America/Eastern"
       - PUID=500
       - PGID=100
+    networks:
+      - backend
     volumes:
       - /mnt/n8n-pg:/var/lib/postgresql/data
     healthcheck:
