@@ -126,6 +126,8 @@ services:
     container_name: "traefik"
     restart: unless-stopped
     user: "500:100"
+    group_add:
+      - "1001"
     environment:
       # ---- Cloudflare DNS for ACME (lego uses this var) ----
       - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
