@@ -2,6 +2,7 @@
 networks:
   proxy:
     external: true
+    name: proxy
   media:
     driver: bridge
   backend:
