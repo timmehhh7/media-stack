@@ -317,6 +317,13 @@ services:
     networks:
       - backend
       - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.overseerr.rule=Host(`automate.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.overseerr.entrypoints=websecure"
+      - "traefik.http.routers.overseerr.tls=true"
+      - "traefik.http.routers.overseerr.tls.certresolver=le-dns"
+      - "traefik.http.services.overseerr.loadbalancer.server.port=5678"
     volumes:
       - /mnt/APPS/n8n:/home/node/.n8n
     depends_on:
