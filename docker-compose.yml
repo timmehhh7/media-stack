@@ -95,6 +95,13 @@ services:
       - 5055:5055
     volumes:
       - /mnt/APPS/overseerr:/app/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.overseerr.rule=Host(`requests.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.overseerr.entrypoints=websecure"
+      - "traefik.http.routers.overseerr.tls=true"
+      - "traefik.http.routers.overseerr.tls.certresolver=le-dns"
+      - "traefik.http.services.overseerr.loadbalancer.server.port=5055"
   traefik:
     image: "traefik:v3.4"
     container_name: "traefik"
@@ -129,7 +136,7 @@ services:
       - --certificatesresolvers.le-dns.acme.dnschallenge.delayBeforeCheck=10
 
       # (Optional) First run against staging to avoid rate limits:
-      - --certificatesresolvers.le-dns.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+      # - --certificatesresolvers.le-dns.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
     labels:
       - "traefik.enable=true"
 
@@ -171,15 +178,15 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /mnt/APPS/traefik/letsencrypt:/letsencrypt
 
-  whoami:
-    image: "traefik/whoami"
-    restart: unless-stopped
-    # networks:
-    #   - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.${BASE_DOMAIN}`)"
-      - "traefik.http.routers.whoami.entrypoints=web"
+  # whoami:
+  #   image: "traefik/whoami"
+  #   restart: unless-stopped
+  #   # networks:
+  #   #   - proxy
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.whoami.rule=Host(`whoami.${BASE_DOMAIN}`)"
+  #     - "traefik.http.routers.whoami.entrypoints=web"
   ddclient:
     image: ghcr.io/linuxserver/ddclient
     container_name: ddclient
