@@ -321,6 +321,7 @@ services:
       # - N8N_LOG_LEVEL=debug
     networks:
       - backend
+      - media
       - proxy
     labels:
       - "traefik.enable=true"
