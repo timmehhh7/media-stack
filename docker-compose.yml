@@ -71,13 +71,17 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
+      # Forward Auth Middleware - points to Authentik
+      - "traefik.http.middlewares.authentik.forwardauth.address=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik"
+      - "traefik.http.middlewares.authentik.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authentik.forwardauth.authResponseHeaders=X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version"
       # Dashboard (secured with Authentik)
       - "traefik.http.routers.traefik.rule=Host(`traefik.${BASE_DOMAIN}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls=true"
       - "traefik.http.routers.traefik.tls.certresolver=le-dns"
       - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.middlewares=authentik@docker"
+      - "traefik.http.routers.traefik.middlewares=authentik"
     ports:
       - "80:80"
       - "443:443"
@@ -159,11 +163,17 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
+      # Main Authentik interface
       - "traefik.http.routers.authentik.rule=Host(`auth.${BASE_DOMAIN}`)"
       - "traefik.http.routers.authentik.entrypoints=websecure"
       - "traefik.http.routers.authentik.tls=true"
       - "traefik.http.routers.authentik.tls.certresolver=le-dns"
       - "traefik.http.services.authentik.loadbalancer.server.port=9000"
+      # Authentik Outpost (for forward auth)
+      - "traefik.http.routers.authentik-outpost.rule=Host(`auth.${BASE_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)"
+      - "traefik.http.routers.authentik-outpost.entrypoints=websecure"
+      - "traefik.http.routers.authentik-outpost.tls=true"
+      - "traefik.http.routers.authentik-outpost.tls.certresolver=le-dns"      
     volumes:
       - /mnt/APPS/authentik/media:/media
       - /mnt/APPS/authentik/custom-templates:/templates
@@ -205,6 +215,7 @@ services:
     restart: unless-stopped
     networks:
       - media
+      - proxy
     volumes:
       - "/mnt/APPS/nzbget:/config"
       - "/mnt/MEDIA/Downloads:/downloads"
@@ -221,7 +232,7 @@ services:
       - "traefik.http.routers.nzbget.entrypoints=websecure"
       - "traefik.http.routers.nzbget.tls=true"
       - "traefik.http.routers.nzbget.tls.certresolver=le-dns"
-      - "traefik.http.routers.nzbget.middlewares=authentik@docker"
+      - "traefik.http.routers.nzbget.middlewares=authentik"
       - "traefik.http.services.nzbget.loadbalancer.server.port=6789"
 
   sonarr:
