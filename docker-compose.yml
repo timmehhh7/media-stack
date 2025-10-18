@@ -358,7 +358,7 @@ services:
       - "traefik.http.routers.tdarr.tls=true"
       - "traefik.http.routers.tdarr.tls.certresolver=le-dns"
       - "traefik.http.routers.tdarr.middlewares=authentik-tdarr"
-      - "traefik.http.services.tdarr.loadbalancer.server.port=6789"
+      - "traefik.http.services.tdarr.loadbalancer.server.port=8265"
     networks:
       - media
       - proxy
@@ -426,7 +426,7 @@ services:
       - "traefik.http.routers.maintainerr.tls=true"
       - "traefik.http.routers.maintainerr.tls.certresolver=le-dns"
       - "traefik.http.routers.maintainerr.middlewares=authentik-maintainerr"
-      - "traefik.http.services.maintainerr.loadbalancer.server.port=6789"
+      - "traefik.http.services.maintainerr.loadbalancer.server.port=6246"
 
 
   tautulli:
