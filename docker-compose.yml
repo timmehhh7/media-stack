@@ -85,6 +85,12 @@ services:
       - "traefik.http.middlewares.authentik-radarr.forwardauth.address=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik?X-authentik-app-slug=radarr"
       - "traefik.http.middlewares.authentik-radarr.forwardauth.trustForwardHeader=true"
       - "traefik.http.middlewares.authentik-radarr.forwardauth.authResponseHeaders=X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version"
+      - "traefik.http.middlewares.authentik-maintainerr.forwardauth.address=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik?X-authentik-app-slug=maintainerr"
+      - "traefik.http.middlewares.authentik-maintainerr.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authentik-maintainerr.forwardauth.authResponseHeaders=X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version"
+      - "traefik.http.middlewares.authentik-tdarr.forwardauth.address=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik?X-authentik-app-slug=tdarr"
+      - "traefik.http.middlewares.authentik-tdarr.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authentik-tdarr.forwardauth.authResponseHeaders=X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version"
       # Dashboard (secured with Authentik)
       - "traefik.http.routers.traefik.rule=Host(`traefik.${BASE_DOMAIN}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
@@ -328,9 +334,9 @@ services:
     image: haveagitgat/tdarr
     container_name: tdarr
     restart: unless-stopped
-    ports:
-      - "8265:8265" # WebUI
-      - "8266:8266" # Node communications
+    # ports:
+    #   - "8265:8265" # WebUI
+    #   - "8266:8266" # Node communications
     environment:
       - TZ="America/Eastern"
       - PUID=500
@@ -344,8 +350,18 @@ services:
       - nodeHardwareEncoding=true
       - LIBVA_DRIVER_NAME=iHD
       - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.tdarr.rule=Host(`tdarr.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.tdarr.entrypoints=websecure"
+      - "traefik.http.routers.tdarr.tls=true"
+      - "traefik.http.routers.tdarr.tls.certresolver=le-dns"
+      - "traefik.http.routers.tdarr.middlewares=authentik-tdarr"
+      - "traefik.http.services.tdarr.loadbalancer.server.port=6789"
     networks:
       - media
+      - proxy
     volumes:
       - /mnt/APPS/tdarr/server:/app/server
       - /mnt/APPS/tdarr/logs:/app/logs
@@ -395,13 +411,23 @@ services:
     user: "500:100"
     environment:
       - TZ=America/Eastern
-    ports:
-      - 27024:6246
+    # ports:
+    #   - 27024:6246
     volumes:
       - /mnt/APPS/maintainerr:/opt/data
     networks:
       - media
       - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.maintainerr.rule=Host(`maintainerr.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.maintainerr.entrypoints=websecure"
+      - "traefik.http.routers.maintainerr.tls=true"
+      - "traefik.http.routers.maintainerr.tls.certresolver=le-dns"
+      - "traefik.http.routers.maintainerr.middlewares=authentik-maintainerr"
+      - "traefik.http.services.maintainerr.loadbalancer.server.port=6789"
+
 
   tautulli:
     image: linuxserver/tautulli:2.16.0
