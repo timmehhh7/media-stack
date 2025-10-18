@@ -1,4 +1,21 @@
 ---
+# ==============================================================================
+# MEDIA STACK DOCKER COMPOSE
+# ==============================================================================
+# A comprehensive media automation and management stack featuring:
+# - Media Acquisition: Sonarr, Radarr, NZBGet
+# - Media Serving: Plex, Tdarr (transcoding)
+# - Request Management: Overseerr, Maintainerr
+# - Monitoring: Tautulli
+# - Automation: n8n
+# - Authentication: Authentik (SSO)
+# - Reverse Proxy: Traefik with Let's Encrypt
+# - Home Automation: Home Assistant, Homebridge
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# NETWORKS
+# ------------------------------------------------------------------------------
 networks:
   proxy:
     external: true
@@ -8,7 +25,179 @@ networks:
   backend:
     driver: bridge
 
+# ------------------------------------------------------------------------------
+# SERVICES
+# ------------------------------------------------------------------------------
 services:
+  # ============================================================================
+  # REVERSE PROXY & NETWORKING
+  # ============================================================================
+  
+  traefik:
+    image: "traefik:v3.4"
+    container_name: "traefik"
+    restart: unless-stopped
+    user: "500:100"
+    group_add:
+      - "1001"
+    environment:
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+      - TZ="America/Eastern"
+      - UID=500
+      - GID=100
+    security_opt:
+      - no-new-privileges:true
+    command:
+      # Providers
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=proxy
+      # EntryPoints
+      - --entryPoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls.certresolver=le-dns
+      # API / Dashboard
+      - --api.dashboard=true
+      - --api.insecure=false
+      - --api=true
+      # ACME / Let's Encrypt (DNS-01 with Cloudflare)
+      - --certificatesresolvers.le-dns.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.le-dns.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le-dns.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.le-dns.acme.dnschallenge.delayBeforeCheck=10
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      # Dashboard (secured with basic auth)
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=le-dns"
+      - "traefik.http.routers.traefik.service=api@internal"
+      # Basic auth middleware
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_USERS}"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /mnt/APPS/traefik/letsencrypt:/letsencrypt
+
+  ddclient:
+    image: ghcr.io/linuxserver/ddclient
+    container_name: ddclient
+    restart: unless-stopped
+    environment:
+      - PUID=500
+      - PGID=100
+    networks:
+      - media
+    volumes:
+      - /mnt/APPS/ddclient:/config
+
+  # ============================================================================
+  # AUTHENTICATION & SSO
+  # ============================================================================
+
+  authentik-postgres:
+    image: postgres:16
+    container_name: authentik-postgres
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - POSTGRES_DB=${AUTHENTIK_DB_NAME}
+      - POSTGRES_USER=${AUTHENTIK_DB_USER}
+      - POSTGRES_PASSWORD=${AUTHENTIK_DB_PASSWORD}
+      - TZ="America/Eastern"
+    networks:
+      - backend
+    volumes:
+      - /mnt/APPS/authentik/database:/var/lib/postgresql/data
+
+  authentik-redis:
+    image: redis:alpine
+    container_name: authentik-redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+    command: --save 60 1 --loglevel warning
+
+  authentik-server:
+    image: ghcr.io/goauthentik/server:latest
+    container_name: authentik-server
+    restart: unless-stopped
+    command: server
+    environment:
+      - AUTHENTIK_REDIS__HOST=authentik-redis
+      - AUTHENTIK_POSTGRESQL__HOST=authentik-postgres
+      - AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB_NAME:-authentik}
+      - AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER:-authentik}
+      - AUTHENTIK_POSTGRESQL__PASSWORD=${AUTHENTIK_DB_PASSWORD}
+      - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
+      - AUTHENTIK_ERROR_REPORTING__ENABLED=false
+      - AUTHENTIK_DISABLE_UPDATE_CHECK=false
+      - AUTHENTIK_DISABLE_STARTUP_ANALYTICS=true
+      - AUTHENTIK_AVATARS=initials
+      - TZ="America/Eastern"
+    networks:
+      - backend
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.authentik.rule=Host(`auth.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.authentik.entrypoints=websecure"
+      - "traefik.http.routers.authentik.tls=true"
+      - "traefik.http.routers.authentik.tls.certresolver=le-dns"
+      - "traefik.http.services.authentik.loadbalancer.server.port=9000"
+    volumes:
+      - /mnt/APPS/authentik/media:/media
+      - /mnt/APPS/authentik/custom-templates:/templates
+    depends_on:
+      - authentik-postgres
+      - authentik-redis
+
+  authentik-worker:
+    image: ghcr.io/goauthentik/server:latest
+    container_name: authentik-worker
+    restart: unless-stopped
+    command: worker
+    environment:
+      - AUTHENTIK_REDIS__HOST=authentik-redis
+      - AUTHENTIK_POSTGRESQL__HOST=authentik-postgres
+      - AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB_NAME}
+      - AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER}
+      - AUTHENTIK_POSTGRESQL__PASSWORD=${AUTHENTIK_DB_PASSWORD}
+      - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
+      - AUTHENTIK_ERROR_REPORTING__ENABLED=false
+      - TZ="America/Eastern"
+    networks:
+      - backend
+    volumes:
+      - /mnt/APPS/authentik/media:/media
+      - /mnt/APPS/authentik/certs:/certs
+      - /mnt/APPS/authentik/custom-templates:/templates
+    depends_on:
+      - authentik-postgres
+      - authentik-redis
+
+  # ============================================================================
+  # MEDIA ACQUISITION & DOWNLOAD
+  # ============================================================================
+
   nzbget:
     image: linuxserver/nzbget:version-v21.1
     container_name: nzbget
@@ -24,9 +213,9 @@ services:
     environment:
       - PUID=500
       - PGID=100
+
   sonarr:
     image: linuxserver/sonarr:4.0.15
-    # image: linuxserver/sonarr
     container_name: sonarr
     restart: unless-stopped
     security_opt:
@@ -46,6 +235,7 @@ services:
     environment:
       - PUID=500
       - PGID=100
+
   radarr:
     image: linuxserver/radarr:5.27.5
     container_name: radarr
@@ -65,6 +255,11 @@ services:
     environment:
       - PUID=500
       - PGID=100
+
+  # ============================================================================
+  # MEDIA SERVING & TRANSCODING
+  # ============================================================================
+
   plex:
     image: plexinc/pms-docker:plexpass
     container_name: plex
@@ -81,6 +276,86 @@ services:
       - PGID=100
     devices:
       - /dev/dri:/dev/dri
+
+  tdarr:
+    image: haveagitgat/tdarr
+    container_name: tdarr
+    restart: unless-stopped
+    ports:
+      - "8265:8265" # WebUI
+      - "8266:8266" # Node communications
+    environment:
+      - TZ="America/Eastern"
+      - PUID=500
+      - PGID=100
+      - serverIP=10.88.111.202
+      - serverPort=8266
+      - internalNode=true
+      - inContainer=true
+      - ffmpegVersion=7
+      - nodeName=Krypton
+      - nodeHardwareEncoding=true
+      - LIBVA_DRIVER_NAME=iHD
+      - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128
+    networks:
+      - media
+    volumes:
+      - /mnt/APPS/tdarr/server:/app/server
+      - /mnt/APPS/tdarr/logs:/app/logs
+      - /mnt/APPS/tdarr/configs:/app/configs
+      - /mnt/MEDIA:/media
+      - /mnt/tdarr-cache:/temp
+    group_add:
+      - "44"
+      - "993"
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+      - /dev/dri/card0:/dev/dri/card0
+
+  # ============================================================================
+  # MEDIA REQUESTS & MONITORING
+  # ============================================================================
+
+  overseerr:
+    image: sctx/overseerr:latest
+    container_name: overseerr
+    restart: unless-stopped
+    environment:
+      - TZ="America/Eastern"
+      - PUID=500
+      - PGID=100
+      - PORT=5055
+    ports:
+      - 5055:5055
+    volumes:
+      - /mnt/APPS/overseerr:/app/config
+    networks:
+      - proxy
+      - media
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.overseerr.rule=Host(`requests.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.overseerr.entrypoints=websecure"
+      - "traefik.http.routers.overseerr.tls=true"
+      - "traefik.http.routers.overseerr.tls.certresolver=le-dns"
+      - "traefik.http.services.overseerr.loadbalancer.server.port=5055"
+
+  maintainerr:
+    image: ghcr.io/jorenn92/maintainerr:latest
+    container_name: maintainerr
+    restart: unless-stopped
+    user: "500:100"
+    environment:
+      - TZ=America/Eastern
+    ports:
+      - 27024:6246
+    volumes:
+      - /mnt/APPS/maintainerr:/opt/data
+    networks:
+      - media
+      - proxy
+
   tautulli:
     image: linuxserver/tautulli:2.16.0
     container_name: tautulli
@@ -97,208 +372,32 @@ services:
     environment:
       - PUID=500
       - PGID=100
-  overseerr:
-    image: sctx/overseerr:latest
-    container_name: overseerr
+
+  # ============================================================================
+  # AUTOMATION & WORKFLOWS
+  # ============================================================================
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
     restart: unless-stopped
     environment:
+      - POSTGRES_DB=n8n
+      - POSTGRES_USER=${N8N_DB_USER}
+      - POSTGRES_PASSWORD=${N8N_DB_PASSWORD}
       - TZ="America/Eastern"
       - PUID=500
       - PGID=100
-      - PORT=5055 #optional
-    ports:
-      - 5055:5055
-    volumes:
-      - /mnt/APPS/overseerr:/app/config
     networks:
-      - proxy
-      - media
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=proxy"
-      - "traefik.http.routers.overseerr.rule=Host(`requests.${BASE_DOMAIN}`)"
-      - "traefik.http.routers.overseerr.entrypoints=websecure"
-      - "traefik.http.routers.overseerr.tls=true"
-      - "traefik.http.routers.overseerr.tls.certresolver=le-dns"
-      - "traefik.http.services.overseerr.loadbalancer.server.port=5055"
-  maintainerr:
-    image: ghcr.io/jorenn92/maintainerr:latest
-    container_name: maintainerr
-    restart: unless-stopped
-    user: "500:100"
-    environment:
-      - TZ=America/Eastern
-    ports:
-      - 27024:6246
+      - backend
     volumes:
-      - /mnt/APPS/maintainerr:/opt/data
-    networks:
-      - media
-      - proxy
-  traefik:
-    image: "traefik:v3.4"
-    container_name: "traefik"
-    restart: unless-stopped
-    user: "500:100"
-    group_add:
-      - "1001"
-    environment:
-      # ---- Cloudflare DNS for ACME (lego uses this var) ----
-      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
-      - TZ="America/Eastern"
-      - UID=500
-      - GID=100
-    security_opt:
-      - no-new-privileges:true
-    command:
-      # ---- Providers ----
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --providers.docker.network=proxy
-      # ---- EntryPoints ----
-      - --entryPoints.web.address=:80
-      - --entrypoints.web.http.redirections.entrypoint.to=websecure
-      - --entrypoints.web.http.redirections.entrypoint.scheme=https
-      - --entrypoints.websecure.address=:443
-      - --entrypoints.websecure.http.tls.certresolver=le-dns
-      # ---- API / Dashboard ----
-      - --api.dashboard=true
-      - --api.insecure=false
-      - --api=true
-      # ---- ACME / Let's Encrypt (DNS-01 with Cloudflare) ----
-      - --certificatesresolvers.le-dns.acme.email=${ACME_EMAIL}
-      - --certificatesresolvers.le-dns.acme.storage=/letsencrypt/acme.json
-      - --certificatesresolvers.le-dns.acme.dnschallenge.provider=cloudflare
-      # If your DNS is slow to propagate, bump this a bit (in seconds)
-      - --certificatesresolvers.le-dns.acme.dnschallenge.delayBeforeCheck=10
+      - /mnt/n8n-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-      # (Optional) First run against staging to avoid rate limits:
-      # - --certificatesresolvers.le-dns.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
-    networks:
-      - proxy
-    labels:
-      - "traefik.enable=true"
-
-      # ---------- TLS: request a wildcard cert up front ----------
-      # Traefik only asks for a wildcard when you declare tls.domains
-      # - "traefik.http.routers._acme-catchall.tls=true"
-      # - "traefik.http.routers._acme-catchall.tls.certresolver=le-dns"
-      # - "traefik.http.routers._acme-catchall.rule=HostRegexp(`{any:.+}`)"  # dummy router to trigger cert request
-      # - "traefik.http.routers._acme-catchall.entrypoints=websecure"
-      # - "traefik.http.routers._acme-catchall.priority=1"
-      # - "traefik.http.routers._acme-catchall.service=noop@internal"
-      # - "traefik.http.routers._acme-catchall.tls.domains[0].main=${BASE_DOMAIN}"
-      # - "traefik.http.routers._acme-catchall.tls.domains[0].sans=*.${BASE_DOMAIN}"
-
-      # ---------- Dashboard (secured) ----------
-      - "traefik.http.routers.traefik.rule=Host(`traefik.${BASE_DOMAIN}`)"
-      - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.tls=true"
-      - "traefik.http.routers.traefik.tls.certresolver=le-dns"
-      - "traefik.http.routers.traefik.service=api@internal"
-      # - "traefik.http.routers.traefik.middlewares=dashboard-auth,secure-headers"
-
-      # Basic auth for dashboard
-      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_USERS}"
-
-      # Some sensible security headers (adjust as you like)
-      # - "traefik.http.middlewares.secure-headers.headers.stsSeconds=63072000"
-      # - "traefik.http.middlewares.secure-headers.headers.stsIncludeSubdomains=true"
-      # - "traefik.http.middlewares.secure-headers.headers.stsPreload=true"
-      # - "traefik.http.middlewares.secure-headers.headers.referrerPolicy=no-referrer-when-downgrade"
-      # - "traefik.http.middlewares.secure-headers.headers.frameDeny=true"
-      # - "traefik.http.middlewares.secure-headers.headers.contentTypeNosniff=true"
-      # - "traefik.http.middlewares.secure-headers.headers.browserXssFilter=true"
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /mnt/APPS/traefik/letsencrypt:/letsencrypt
-
-  # whoami:
-  #   image: "traefik/whoami"
-  #   restart: unless-stopped
-  #   # networks:
-  #   #   - proxy
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.whoami.rule=Host(`whoami.${BASE_DOMAIN}`)"
-  #     - "traefik.http.routers.whoami.entrypoints=web"
-  ddclient:
-    image: ghcr.io/linuxserver/ddclient
-    container_name: ddclient
-    restart: unless-stopped
-    environment:
-      - PUID=500
-      - PGID=100
-    networks:
-      - media
-    volumes:
-      - /mnt/APPS/ddclient:/config
-  homeassistant:
-    image: ghcr.io/home-assistant/home-assistant:stable
-    container_name: homeassistant
-    restart: unless-stopped
-    environment:
-      - TZ="America/Eastern"
-      - PUID=500
-      - PGID=100
-    network_mode: host
-    volumes:
-      - /mnt/APPS/homeassistant:/config
-  homebridge:
-    image: oznu/homebridge:latest
-    container_name: homebridge
-    restart: unless-stopped
-    network_mode: host
-    environment:
-      - TZ="America/Eastern"
-      - PGID=100
-      - PUID=500
-      - HOMEBRIDGE_CONFIG_UI=1
-      - HOMEBRIDGE_CONFIG_UI_PORT=8581
-    volumes:
-      - /mnt/APPS/homebridge:/homebridge
-  tdarr:
-    image: haveagitgat/tdarr
-    container_name: tdarr
-    restart: unless-stopped
-    ports:
-      - "8265:8265" # WebUI
-      - "8266:8266" # Node communications
-    environment:
-      - TZ="America/Eastern"
-      - PUID=500
-      - PGID=100
-      - serverIP=10.88.111.202 # Or your server's IP
-      - serverPort=8266
-      - internalNode=true
-      - inContainer=true
-      - ffmpegVersion=7
-      - nodeName=Krypton
-      - nodeHardwareEncoding=true
-      - LIBVA_DRIVER_NAME=iHD              # use the modern Intel media driver
-      - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128
-    networks:
-      - media
-    volumes:
-      - /mnt/APPS/tdarr/server:/app/server
-      - /mnt/APPS/tdarr/logs:/app/logs
-      - /mnt/APPS/tdarr/configs:/app/configs
-      - /mnt/MEDIA:/media # Your media library
-      - /mnt/tdarr-cache:/temp # Transcode cache
-      # Optional: Specify Intel QSV for FFMPEG
-      # - FFMPEG_HWACCEL_ARGS=-hwaccel qsv -qsv_device /dev/dri/renderD128 
-      #    devices:
-      #- /dev/dri:/dev/dri # Expose Intel iGPU devices
-    group_add:       
-      - "44"
-      - "993"
-    devices:
-      - /dev/dri/renderD128:/dev/dri/renderD128
-      - /dev/dri/card0:/dev/dri/card0
   n8n:
     image: docker.n8n.io/n8nio/n8n
     container_name: n8n
@@ -332,7 +431,6 @@ services:
       - GENERIC_TIMEZONE=America/Toronto
       - PUID=500
       - PGID=100
-      # - N8N_LOG_LEVEL=debug
     networks:
       - backend
       - media
@@ -350,23 +448,33 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-  postgres:
-    image: postgres:16
-    container_name: postgres
+
+  # ============================================================================
+  # HOME AUTOMATION
+  # ============================================================================
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=n8n
-      - POSTGRES_USER=${N8N_DB_USER}
-      - POSTGRES_PASSWORD=${N8N_DB_PASSWORD}
       - TZ="America/Eastern"
       - PUID=500
       - PGID=100
-    networks:
-      - backend
+    network_mode: host
     volumes:
-      - /mnt/n8n-pg:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U n8n"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - /mnt/APPS/homeassistant:/config
+
+  homebridge:
+    image: oznu/homebridge:latest
+    container_name: homebridge
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - TZ="America/Eastern"
+      - PGID=100
+      - PUID=500
+      - HOMEBRIDGE_CONFIG_UI=1
+      - HOMEBRIDGE_CONFIG_UI_PORT=8581
+    volumes:
+      - /mnt/APPS/homebridge:/homebridge
