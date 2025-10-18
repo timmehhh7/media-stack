@@ -71,14 +71,13 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      # Dashboard (secured with basic auth)
+      # Dashboard (secured with Authentik)
       - "traefik.http.routers.traefik.rule=Host(`traefik.${BASE_DOMAIN}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls=true"
       - "traefik.http.routers.traefik.tls.certresolver=le-dns"
       - "traefik.http.routers.traefik.service=api@internal"
-      # Basic auth middleware
-      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_USERS}"
+      - "traefik.http.routers.traefik.middlewares=authentik@docker"
     ports:
       - "80:80"
       - "443:443"
@@ -210,11 +209,20 @@ services:
       - "/mnt/APPS/nzbget:/config"
       - "/mnt/MEDIA/Downloads:/downloads"
       - "/mnt/MEDIA/Downloads/complete:/downloads/complete"
-    ports:
-      - 27020:6789
+    # ports:
+    #   - 27020:6789
     environment:
       - PUID=500
       - PGID=100
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.nzbget.rule=Host(`nzbget.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.nzbget.entrypoints=websecure"
+      - "traefik.http.routers.nzbget.tls=true"
+      - "traefik.http.routers.nzbget.tls.certresolver=le-dns"
+      - "traefik.http.routers.nzbget.middlewares=authentik@docker"
+      - "traefik.http.services.nzbget.loadbalancer.server.port=6789"
 
   sonarr:
     image: linuxserver/sonarr:4.0.15
