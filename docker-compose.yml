@@ -491,6 +491,7 @@ services:
       - N8N_SMTP_PASS=${SMTP_PASSWORD}
       - N8N_SMTP_SENDER="n8n <noreply@thefairweathers.ca>"
       - N8N_SMTP_SSL=false
+      - RADARR_API_KEY=${RADARR_API_KEY}
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
