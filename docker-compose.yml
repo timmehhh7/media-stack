@@ -154,8 +154,6 @@ services:
       - AUTHENTIK_DISABLE_STARTUP_ANALYTICS=true
       - AUTHENTIK_AVATARS=initials
       - TZ="America/Eastern"
-      - PUID=500
-      - PGID=100
     networks:
       - backend
       - proxy
@@ -188,8 +186,6 @@ services:
       - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
       - AUTHENTIK_ERROR_REPORTING__ENABLED=false
       - TZ="America/Eastern"
-      - PUID=500
-      - PGID=100
     networks:
       - backend
     volumes:
