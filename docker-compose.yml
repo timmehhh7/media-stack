@@ -71,17 +71,27 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      # Forward Auth Middleware - points to Authentik
+      # Forward Auth Middleware - points to Authentik (domain level - for general services)
       - "traefik.http.middlewares.authentik.forwardauth.address=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik"
       - "traefik.http.middlewares.authentik.forwardauth.trustForwardHeader=true"
       - "traefik.http.middlewares.authentik.forwardauth.authResponseHeaders=X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version"
+      # Service-specific middlewares with app slugs
+      - "traefik.http.middlewares.authentik-nzbget.forwardauth.address=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik?X-authentik-app-slug=nzbget"
+      - "traefik.http.middlewares.authentik-nzbget.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authentik-nzbget.forwardauth.authResponseHeaders=X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version"
+      - "traefik.http.middlewares.authentik-sonarr.forwardauth.address=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik?X-authentik-app-slug=sonarr"
+      - "traefik.http.middlewares.authentik-sonarr.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authentik-sonarr.forwardauth.authResponseHeaders=X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version"
+      - "traefik.http.middlewares.authentik-radarr.forwardauth.address=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik?X-authentik-app-slug=radarr"
+      - "traefik.http.middlewares.authentik-radarr.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authentik-radarr.forwardauth.authResponseHeaders=X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version"
       # Dashboard (secured with Authentik)
       - "traefik.http.routers.traefik.rule=Host(`traefik.${BASE_DOMAIN}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls=true"
       - "traefik.http.routers.traefik.tls.certresolver=le-dns"
       - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.middlewares=authentik"
+      - "traefik.http.routers.traefik.middlewares=authentik"          
     ports:
       - "80:80"
       - "443:443"
@@ -232,7 +242,7 @@ services:
       - "traefik.http.routers.nzbget.entrypoints=websecure"
       - "traefik.http.routers.nzbget.tls=true"
       - "traefik.http.routers.nzbget.tls.certresolver=le-dns"
-      - "traefik.http.routers.nzbget.middlewares=authentik"
+      - "traefik.http.routers.nzbget.middlewares=authentik-nzbget"
       - "traefik.http.services.nzbget.loadbalancer.server.port=6789"
 
   sonarr:
@@ -245,17 +255,25 @@ services:
       - nzbget
     networks:
       - media
+      - proxy
     volumes:
       - "/mnt/APPS/sonarr:/config"
       - "/mnt/MEDIA/TV:/tv"
       - "/mnt/MEDIA/Downloads/complete/Series:/downloads"
-    ports:
-      - 27021:8989
-    links:
-      - nzbget
+    # ports:
+    #   - 27021:8989
     environment:
       - PUID=500
       - PGID=100
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.sonarr.entrypoints=websecure"
+      - "traefik.http.routers.sonarr.tls=true"
+      - "traefik.http.routers.sonarr.tls.certresolver=le-dns"
+      - "traefik.http.routers.sonarr.middlewares=authentik-sonarr"
+      - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
 
   radarr:
     image: linuxserver/radarr:5.27.5
@@ -265,17 +283,25 @@ services:
       - nzbget
     networks:
       - media
+      - proxy
     volumes:
       - "/mnt/APPS/radarr:/config"
       - "/mnt/MEDIA/Movies:/movies"
       - "/mnt/MEDIA/Downloads/complete/Movies:/downloads"
-    ports:
-      - 27022:7878
-    links:
-      - nzbget
+    # ports:
+    #   - 27022:7878
     environment:
       - PUID=500
       - PGID=100
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.radarr.entrypoints=websecure"
+      - "traefik.http.routers.radarr.tls=true"
+      - "traefik.http.routers.radarr.tls.certresolver=le-dns"
+      - "traefik.http.routers.radarr.middlewares=authentik-radarr"
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
 
   # ============================================================================
   # MEDIA SERVING & TRANSCODING
