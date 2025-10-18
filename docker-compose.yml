@@ -125,10 +125,9 @@ services:
     image: ghcr.io/jorenn92/maintainerr:latest
     container_name: maintainerr
     restart: unless-stopped
+    user: "500:100"
     environment:
       - TZ=America/Eastern
-      - PUID=500
-      - PGID=100
     ports:
       - 6246:6246
     volumes:
