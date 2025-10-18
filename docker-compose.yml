@@ -121,6 +121,29 @@ services:
       - "traefik.http.routers.overseerr.tls=true"
       - "traefik.http.routers.overseerr.tls.certresolver=le-dns"
       - "traefik.http.services.overseerr.loadbalancer.server.port=5055"
+  maintainerr:
+    image: ghcr.io/jorenn92/maintainerr:latest
+    container_name: maintainerr
+    restart: unless-stopped
+    environment:
+      - TZ=America/Eastern
+      - PUID=500
+      - PGID=100
+    ports:
+      - 6246:6246
+    volumes:
+      - /mnt/APPS/maintainerr:/opt/data
+    networks:
+      - media
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.maintainerr.rule=Host(`media.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.maintainerr.entrypoints=websecure"
+      - "traefik.http.routers.maintainerr.tls=true"
+      - "traefik.http.routers.maintainerr.tls.certresolver=le-dns"
+      - "traefik.http.services.maintainerr.loadbalancer.server.port=6246"
   traefik:
     image: "traefik:v3.4"
     container_name: "traefik"
