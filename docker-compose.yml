@@ -341,7 +341,7 @@ services:
       - TZ="America/Eastern"
       - PUID=500
       - PGID=100
-      - serverIP=10.88.111.202
+      - serverIP=127.0.0.1
       - serverPort=8266
       - internalNode=true
       - inContainer=true
