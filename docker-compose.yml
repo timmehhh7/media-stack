@@ -129,20 +129,12 @@ services:
     environment:
       - TZ=America/Eastern
     ports:
-      - 6246:6246
+      - 27024:6246
     volumes:
       - /mnt/APPS/maintainerr:/opt/data
     networks:
       - media
       - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=proxy"
-      - "traefik.http.routers.maintainerr.rule=Host(`media.${BASE_DOMAIN}`)"
-      - "traefik.http.routers.maintainerr.entrypoints=websecure"
-      - "traefik.http.routers.maintainerr.tls=true"
-      - "traefik.http.routers.maintainerr.tls.certresolver=le-dns"
-      - "traefik.http.services.maintainerr.loadbalancer.server.port=6246"
   traefik:
     image: "traefik:v3.4"
     container_name: "traefik"
